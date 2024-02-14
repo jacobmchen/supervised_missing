@@ -42,9 +42,11 @@ registerDoSNOW(cl)
 Parallel <- function(dataset, n_features, num.threads.ranger=num.threads) {
     iter.seed <- 15
     sizes <- c(2000)
-    #n_rep <- 5
-    n_rep <- 1000
+    # sizes <- c(10)
+    n_rep <- 5
+    # n_rep <- 1000
     prob <- 0.2
+    # prob <- 0.5
     noise = 0.1
     min_samples_leaf = 30
     rho = 0.5
@@ -61,8 +63,7 @@ Parallel <- function(dataset, n_features, num.threads.ranger=num.threads) {
         ,
         "rpart oor + mask" = list(dataset=dataset, model='rpart', strategy='oor', withpattern=TRUE)
         ,
-        
-         "rpart gaussian" = list(dataset=dataset, model='rpart', strategy='gaussian', withpattern=FALSE)
+        "rpart gaussian" = list(dataset=dataset, model='rpart', strategy='gaussian', withpattern=FALSE)
         ,
         "rpart gaussian + mask" = list(dataset=dataset, model='rpart', strategy='gaussian', withpattern=TRUE)
         ,
@@ -100,10 +101,39 @@ Parallel <- function(dataset, n_features, num.threads.ranger=num.threads) {
         ,
         "xgboost gaussian + mask" = list(dataset=dataset, model='xgboost', strategy='gaussian', withpattern=TRUE)
         ,
+        # why does this strategy have to be none?
         "xgboost mia" = list(dataset=dataset, model='xgboost', strategy='none', withpattern=FALSE)
+        ,
+        "svm mean" = list(dataset=dataset, model='svm', strategy='mean', withpattern=FALSE)
+        ,
+        "svm mean + mask" = list(dataset=dataset, model='svm', strategy='mean', withpattern=TRUE)
+        ,
+        "svm oor" = list(dataset=dataset, model='svm', strategy='oor', withpattern=FALSE)
+        ,
+        "svm oor + mask" = list(dataset=dataset, model='svm', strategy='oor', withpattern=TRUE)
+        ,
+        "svm gaussian" = list(dataset=dataset, model='svm', strategy='gaussian', withpattern=FALSE)
+        ,
+        "svm gaussian + mask" = list(dataset=dataset, model='svm', strategy='gaussian', withpattern=TRUE)
+        ,
+        "svm mia" = list(dataset=dataset, model='svm', strategy='mia', withpattern=FALSE)
+        ,
+        "knn mean" = list(dataset=dataset, model='knn', strategy='mean', withpattern=FALSE)
+        ,
+        "knn mean + mask" = list(dataset=dataset, model='knn', strategy='mean', withpattern=TRUE)
+        ,
+        "knn oor" = list(dataset=dataset, model='knn', strategy='oor', withpattern=FALSE)
+        ,
+        "knn oor + mask" = list(dataset=dataset, model='knn', strategy='oor', withpattern=TRUE)
+        ,
+        "knn gaussian" = list(dataset=dataset, model='knn', strategy='gaussian', withpattern=FALSE)
+        ,
+        "knn gaussian + mask" = list(dataset=dataset, model='knn', strategy='gaussian', withpattern=TRUE)
+        ,
+        "knn mia" = list(dataset=dataset, model='knn', strategy='mia', withpattern=FALSE)
     )) %dopar% {
         #iter.seed <- iter.seed + 1
-        source('boxplots/functions_boxplots.R')
+        source('functions_boxplots.R')
         run_scores(model=param$model, strategy=param$strategy, withpattern=param$withpattern,
                    dataset=param$dataset,
                    sizes=sizes, n_rep=n_rep, prob=prob, n_features=n_features, noise=noise,
@@ -116,47 +146,50 @@ Parallel <- function(dataset, n_features, num.threads.ranger=num.threads) {
 
 n_features_boxplot1 <- 9
 if (boxplot_choice == 1 | boxplot_choice == -1) {
-    if (file.exists("boxplots/results/boxplot_MCAR.RData")) {
-        load("boxplots/results/boxplot_MCAR.RData")
-        res <- Parallel("make_data1", n_features=n_features_boxplot1)
-        scores_mcar <- modifyList(scores_mcar, res)
-    } else scores_mcar <- Parallel("make_data1", n_features=n_features_boxplot1)
-    save(scores_mcar, file="boxplots/results/boxplot_MCAR.RData")
+    # if (file.exists("results/boxplot_MCAR.RData")) {
+    #     load("results/boxplot_MCAR.RData")
+    #     res <- Parallel("make_data1", n_features=n_features_boxplot1)
+    #     scores_mcar <- modifyList(scores_mcar, res)
+    # } else 
+    scores_mcar <- Parallel("make_data1", n_features=n_features_boxplot1)
+    save(scores_mcar, file="results/boxplot_MCAR.RData")
 
-    if (file.exists("boxplots/results/boxplot_MNAR.RData")) {
-        load("boxplots/results/boxplot_MNAR.RData")
-        scores_mnar <- modifyList(scores_mnar, Parallel("make_data3", n_features=n_features_boxplot1))
-    } else scores_mnar <- Parallel("make_data3", n_features=n_features_boxplot1)
-    save(scores_mnar, file="boxplots/results/boxplot_MNAR.RData")
+    # if (file.exists("results/boxplot_MNAR.RData")) {
+    #     load("results/boxplot_MNAR.RData")
+    #     scores_mnar <- modifyList(scores_mnar, Parallel("make_data3", n_features=n_features_boxplot1))
+    # } else 
+    scores_mnar <- Parallel("make_data3", n_features=n_features_boxplot1)
+    save(scores_mnar, file="results/boxplot_MNAR.RData")
 
-    if (file.exists("boxplots/results/boxplot_PRED.RData")) {
-        load("boxplots/results/boxplot_PRED.RData")
-        scores_pred <- modifyList(scores_pred, Parallel("make_data3bis", n_features=n_features_boxplot1))
-    } else scores_pred <- Parallel("make_data3bis", n_features=n_features_boxplot1)
-    save(scores_pred, file="boxplots/results/boxplot_PRED.RData")
+    # if (file.exists("results/boxplot_PRED.RData")) {
+    #     load("results/boxplot_PRED.RData")
+    #     scores_pred <- modifyList(scores_pred, Parallel("make_data3bis", n_features=n_features_boxplot1))
+    # } else 
+    scores_pred <- Parallel("make_data3bis", n_features=n_features_boxplot1)
+    save(scores_pred, file="results/boxplot_PRED.RData")
 
 } 
 
-n_features_boxplot2 <- 10
-if (boxplot_choice == 2 || boxplot_choice == -1) {
-    if (file.exists("boxplots/results/boxplot2_1.RData")) {
-        load("boxplots/results/boxplot2_1.RData")
-        scores_21 <- modifyList(scores_21, Parallel("make_data4", n_features=n_features_boxplot2))
-    } else scores_21 <- Parallel("make_data4", n_features=n_features_boxplot2)
-    save(scores_21, file="boxplots/results/boxplot2_1.RData")
+# n_features_boxplot2 <- 10
+# if (boxplot_choice == 2 || boxplot_choice == -1) {
+#     if (file.exists("results/boxplot2_1.RData")) {
+#         load("results/boxplot2_1.RData")
+#         scores_21 <- modifyList(scores_21, Parallel("make_data4", n_features=n_features_boxplot2))
+#     } else scores_21 <- Parallel("make_data4", n_features=n_features_boxplot2)
+#     save(scores_21, file="results/boxplot2_1.RData")
 
-    if (file.exists("boxplots/results/boxplot2_2.RData")) {
-        load("boxplots/results/boxplot2_2.RData")
-        scores_22 <- modifyList(scores_22, Parallel("make_data5", n_features=n_features_boxplot2))
-    } else scores_22 <- Parallel("make_data5", n_features=n_features_boxplot2)
-    save(scores_22, file="boxplots/results/boxplot2_2.RData")
+#     if (file.exists("results/boxplot2_2.RData")) {
+#         load("results/boxplot2_2.RData")
+#         scores_22 <- modifyList(scores_22, Parallel("make_data5", n_features=n_features_boxplot2))
+#     } else scores_22 <- Parallel("make_data5", n_features=n_features_boxplot2)
+#     save(scores_22, file="results/boxplot2_2.RData")
 
-    if (file.exists("boxplots/results/boxplot2_3.RData")) {
-        load("boxplots/results/boxplot2_3.RData")
-        scores_23 <- modifyList(scores_23, Parallel("make_data6", n_features=n_features_boxplot2))
-    } else scores_23 <- Parallel("make_data6", n_features=n_features_boxplot2)
-    save(scores_23, file="boxplots/results/boxplot2_3.RData")
+#     if (file.exists("results/boxplot2_3.RData")) {
+#         load("results/boxplot2_3.RData")
+#         scores_23 <- modifyList(scores_23, Parallel("make_data6", n_features=n_features_boxplot2))
+#     } else scores_23 <- Parallel("make_data6", n_features=n_features_boxplot2)
+#     save(scores_23, file="results/boxplot2_3.RData")
 
-} else stop("Invalid boxplot_choice")
+# } else stop("Invalid boxplot_choice")
 
 stopCluster(cl)

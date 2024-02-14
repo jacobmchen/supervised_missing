@@ -42,7 +42,7 @@ color_mapping = {
   "MIA":                '#00ff33',
 }
 
-FORESTS = ['DECISION TREE', 'RANDOM FOREST', 'XGBOOST']
+FORESTS = ['DECISION TREE', 'RANDOM FOREST', 'XGBOOST', 'SVM', 'KNN']
 
 # To obtain the measure of the variance below, run in R:
 # > results <- make_data3bis(dim=9, size=200000)
@@ -57,8 +57,9 @@ y_variances = {
     'nonlinearnonlinear': 1082,
 }
 
-for name in ('mcar', 'mnar', 'pred', 'linearlinear', 'linearnonlinear',
-             'nonlinearnonlinear'):
+# for name in ('mcar', 'mnar', 'pred', 'linearlinear', 'linearnonlinear',
+#              'nonlinearnonlinear'):
+for name in ('mcar', 'mnar', 'pred'):
   data = pd.read_csv(f'results/scores_{name}.csv', header=1,
                   names=['index', 'score', 'method', 'forest'])
 
@@ -83,9 +84,10 @@ for name in ('mcar', 'mnar', 'pred', 'linearlinear', 'linearnonlinear',
     #color_mapping = {k: colors.to_rgb(v) for k, v in color_mapping.items()}
 
     height = 6.3 if drop_mask else 10.5
+    # width = 4.6 if drop_mask else 5.6
     width = 4.6 if drop_mask else 5.6
 
-    fig, axes = plt.subplots(3, 1, figsize=(width, height),
+    fig, axes = plt.subplots(5, 1, figsize=(width, height),
                             gridspec_kw=dict(height_ratios=height_ratios))
 
 
@@ -105,11 +107,11 @@ for name in ('mcar', 'mnar', 'pred', 'linearlinear', 'linearnonlinear',
         ax.set_ylabel('')
         ax.axvline(0, color='.8', zorder=0, linewidth=3)
         if name == 'mcar':
-            ax.set_xlim(-.095, .09)
+            ax.set_xlim(-.095, .2)
         elif name == 'mnar':
             ax.set_xlim(-.33, .17)
         elif name == 'pred':
-            ax.set_xlim(-.09, .07)
+            ax.set_xlim(-.09, .2)
         elif name == 'linearlinear':
             ax.set_xlim(-.24, .18)
         elif name == 'linearnonlinear':
@@ -127,11 +129,11 @@ for name in ('mcar', 'mnar', 'pred', 'linearlinear', 'linearnonlinear',
     # the tight_layout
     for forest, ax in zip(FORESTS, axes):
         if name == 'mcar':
-            ax.set_xlim(-.15, .09)
+            ax.set_xlim(-.15, .2)
         elif name == 'mnar':
             ax.set_xlim(-.33, .17)
         elif name == 'pred':
-            ax.set_xlim(-.09, .07)
+            ax.set_xlim(-.09, .2)
         elif name == 'linearlinear':
             ax.set_xlim(-.07, .07)
         elif name == 'linearnonlinear':
@@ -149,8 +151,9 @@ for name in ('mcar', 'mnar', 'pred', 'linearlinear', 'linearnonlinear',
             else:
                 ticklabels.append('$%s$' % format_float(
                                   this_data['R2'].mean()))
+        # print('ticklabels', ticklabels)
         ax.set_xticklabels(ticklabels)
 
     plt.tight_layout(pad=.01, h_pad=2)
     mask_str = '_no_mask' if drop_mask else ''
-    plt.savefig(f'../figures/boxplot_{name}{mask_str}.pdf')
+    plt.savefig(f'figures/boxplot_{name}{mask_str}.pdf')

@@ -6,6 +6,8 @@ library(ranger)
 library(xgboost)
 library(MASS)
 library(norm)
+library(e1071)
+library(caret)
 
 ###############################################################################
 ################################## DATA #######################################
@@ -253,12 +255,15 @@ preprocess <- function(df, strategy, withpattern, parameters) {
         indicators.factor <- data.frame(apply(indicators, 2, as.factor))
         indicators.addfactor <- data.frame(lapply(indicators.factor,
             function(col) as.numeric(factor(col, levels=c("FALSE", "TRUE")))))
-        indsansNA <- which((sapply(indicators.factor, nlevels)) == 1)
+        # indsansNA <- which((sapply(indicators.factor, nlevels)) == 1)
+        indsansNA <- which( sapply(indicators.addfactor, function(col) length(levels(factor(col))) == 1) )
         X.imput <- cbind.data.frame(X.imput, indicators.addfactor[, -indsansNA])
     }
 
     result <- data.frame(cbind(y, X.imput))
     colnames(result)[1] <- "y"
+    # find out how to print result to check if the above withpattern is doing what it is intending to do
+    # print(result)
     return(result)
 }
 
@@ -319,6 +324,7 @@ run_scores <- function(model, strategy, withpattern, dataset,
                 reg <- rpart(y~., data=train, control=rpart.control(
                     minbucket=min_samples_leaf,cp=0.0, xval=1))
                 res <- predict(reg, subset(test, select=-c(y)), type="vector")
+                # print(res)
             } else if (model == "ctree") {
                 reg <- ctree(y~., data=train, controls=ctree_control(
                     minbucket=min_samples_leaf, mincriterion=0.0))
@@ -333,8 +339,19 @@ run_scores <- function(model, strategy, withpattern, dataset,
                     )
                 res <- predict(reg, as.matrix(subset(test, select=-c(y))))
                 sink()
+            } else if (model == "svm") {
+                reg <- svm(y~., data=train)
+                res <- predict(reg, subset(test, select=-c(y)))
+            } else if (model == "knn") {
+                reg <- train(y~., data=train, method="knn", trControl=trainControl(method="cv"))
+                res <- predict(reg, subset(test, select=-c(y)))
             } else stop("Invalid model")
+            
+            # print(train)
 
+            # print(length(res))
+            # print("test")
+            # print(length(test$y))
             result[k, iter.size] = mean((test$y - res)**2)
         }
 
