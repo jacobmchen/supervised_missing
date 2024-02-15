@@ -113,6 +113,10 @@ for col in range(len(missing_mechanisms)):
         ax.set_ylabel('')
         ax.axvline(0, color='.8', zorder=0, linewidth=3)
         ax.set_xlim(xlim_min, xlim_max)
+
+        if col > 0:
+            ax.set_yticklabels([])
+
         sns.despine(bottom=True, left=False)
         for i in range(len(order)):
             if i % 2:
