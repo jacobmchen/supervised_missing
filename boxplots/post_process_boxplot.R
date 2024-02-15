@@ -19,11 +19,9 @@ names(scores_mcar) <- c(
   "Gaussian (xgboost)", "Gaussian + mask (xgboost)", 
   "MIA (xgboost)",
   "mean (svm)", "mean + mask (svm)", "oor (svm)", "oor + mask (svm)",
-  "Gaussian (svm)", "Gaussian + mask (svm)", 
-  "MIA (svm)",
+  "Gaussian (svm)", "Gaussian + mask (svm)",
   "mean (knn)", "mean + mask (knn)", "oor (knn)", "oor + mask (knn)",
-  "Gaussian (knn)", "Gaussian + mask (knn)", 
-  "MIA (knn)"
+  "Gaussian (knn)", "Gaussian + mask (knn)"
 )
 
 names(scores_mnar) <- names(scores_mcar)

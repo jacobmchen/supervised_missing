@@ -43,7 +43,7 @@ Parallel <- function(dataset, n_features, num.threads.ranger=num.threads) {
     iter.seed <- 15
     sizes <- c(2000)
     # sizes <- c(10)
-    n_rep <- 5
+    n_rep <- 100
     # n_rep <- 1000
     prob <- 0.2
     # prob <- 0.5
@@ -116,8 +116,6 @@ Parallel <- function(dataset, n_features, num.threads.ranger=num.threads) {
         ,
         "svm gaussian + mask" = list(dataset=dataset, model='svm', strategy='gaussian', withpattern=TRUE)
         ,
-        "svm mia" = list(dataset=dataset, model='svm', strategy='mia', withpattern=FALSE)
-        ,
         "knn mean" = list(dataset=dataset, model='knn', strategy='mean', withpattern=FALSE)
         ,
         "knn mean + mask" = list(dataset=dataset, model='knn', strategy='mean', withpattern=TRUE)
@@ -129,8 +127,6 @@ Parallel <- function(dataset, n_features, num.threads.ranger=num.threads) {
         "knn gaussian" = list(dataset=dataset, model='knn', strategy='gaussian', withpattern=FALSE)
         ,
         "knn gaussian + mask" = list(dataset=dataset, model='knn', strategy='gaussian', withpattern=TRUE)
-        ,
-        "knn mia" = list(dataset=dataset, model='knn', strategy='mia', withpattern=FALSE)
     )) %dopar% {
         #iter.seed <- iter.seed + 1
         source('functions_boxplots.R')

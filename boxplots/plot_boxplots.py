@@ -74,6 +74,9 @@ for name in ('mcar', 'mnar', 'pred'):
         data_ = data[~data['method'].str.contains("mask")]
     else:
         data_ = data.copy()
+
+    # this line of code finds the mean of each of the R2 and makes that the "center"
+    # line to compare other values
     data_['rel_R2'] = data_.groupby(['fold', 'forest'])['R2'].apply(
         lambda df: df - df.mean())
 
@@ -84,18 +87,23 @@ for name in ('mcar', 'mnar', 'pred'):
     #color_mapping = {k: colors.to_rgb(v) for k, v in color_mapping.items()}
 
     height = 6.3 if drop_mask else 10.5
-    # width = 4.6 if drop_mask else 5.6
     width = 4.6 if drop_mask else 5.6
 
     fig, axes = plt.subplots(5, 1, figsize=(width, height),
                             gridspec_kw=dict(height_ratios=height_ratios))
 
+    # values for minimum and maximum values for the x axis in all corresponding boxplots
+    xlim_min, xlim_max = 0.2, 1.0
 
     for forest, ax in zip(FORESTS, axes):
+        print('ax', ax)
         this_data = data_.query('forest == @forest')
+        print('this_data\n', this_data)
         order = [k for k in color_mapping.keys()
                  if k in this_data['method'].unique()]
-        g = sns.boxplot(x="rel_R2", y="method",
+        # set x="rel_R2" to plot boxplots using values relative to the mean of R2 values
+        # set x="R2" to plot using the same axis
+        g = sns.boxplot(x="R2", y="method",
                         data=this_data,
                         ax=ax, fliersize=0, palette=color_mapping,
                         order=order,
@@ -107,17 +115,23 @@ for name in ('mcar', 'mnar', 'pred'):
         ax.set_ylabel('')
         ax.axvline(0, color='.8', zorder=0, linewidth=3)
         if name == 'mcar':
-            ax.set_xlim(-.095, .2)
+            # ax.set_xlim(-.095, .2)
+            ax.set_xlim(xlim_min, xlim_max)
         elif name == 'mnar':
-            ax.set_xlim(-.33, .17)
+            # ax.set_xlim(-.33, .17)
+            ax.set_xlim(xlim_min, xlim_max)
         elif name == 'pred':
-            ax.set_xlim(-.09, .2)
+            # ax.set_xlim(-.09, .2)
+            ax.set_xlim(xlim_min, xlim_max)
         elif name == 'linearlinear':
-            ax.set_xlim(-.24, .18)
+            # ax.set_xlim(-.24, .18)
+            ax.set_xlim(xlim_min, xlim_max)
         elif name == 'linearnonlinear':
-            ax.set_xlim(-.2, .2)
+            # ax.set_xlim(-.2, .2)
+            ax.set_xlim(xlim_min, xlim_max)
         elif name == 'nonlinearnonlinear':
-            ax.set_xlim(-50, 55)
+            # ax.set_xlim(-50, 55)
+            ax.set_xlim(xlim_min, xlim_max)
         sns.despine(bottom=True, left=False)
         for i in range(len(order)):
             if i % 2:
@@ -129,30 +143,42 @@ for name in ('mcar', 'mnar', 'pred'):
     # the tight_layout
     for forest, ax in zip(FORESTS, axes):
         if name == 'mcar':
-            ax.set_xlim(-.15, .2)
+            # ax.set_xlim(-.15, .2)
+            ax.set_xlim(xlim_min, xlim_max)
         elif name == 'mnar':
-            ax.set_xlim(-.33, .17)
+            # ax.set_xlim(-.33, .17)
+            ax.set_xlim(xlim_min, xlim_max)
         elif name == 'pred':
-            ax.set_xlim(-.09, .2)
+            # ax.set_xlim(-.09, .2)
+            ax.set_xlim(xlim_min, xlim_max)
         elif name == 'linearlinear':
-            ax.set_xlim(-.07, .07)
+            # ax.set_xlim(-.07, .07)
+            ax.set_xlim(xlim_min, xlim_max)
         elif name == 'linearnonlinear':
-            ax.set_xlim(-.09, .09)
+            # ax.set_xlim(-.09, .09)
+            ax.set_xlim(xlim_min, xlim_max)
         elif name == 'nonlinearnonlinear':
-            ax.set_xlim(-.32, .32)
-        this_data = data.query('forest == @forest')
-        ticks = ax.get_xticks()
-        ticklabels = list()
-        for t in ticks:
-            if t < 0:
-                ticklabels.append(format_float(t))
-            elif t > 0:
-                ticklabels.append('+' + format_float(t))
-            else:
-                ticklabels.append('$%s$' % format_float(
-                                  this_data['R2'].mean()))
-        # print('ticklabels', ticklabels)
-        ax.set_xticklabels(ticklabels)
+            # ax.set_xlim(-.32, .32)
+            ax.set_xlim(xlim_min, xlim_max)
+
+        """
+        the following code makes the x-axis labels have positive or negative values
+        depending on whether the values are less than or greater than the mean of the
+        R2 values in the dataframe
+        """
+        # this_data = data.query('forest == @forest')
+        # ticks = ax.get_xticks()
+        # ticklabels = list()
+        # for t in ticks:
+        #     if t < 0:
+        #         ticklabels.append(format_float(t))
+        #     elif t > 0:
+        #         ticklabels.append('+' + format_float(t))
+        #     else:
+        #         ticklabels.append('$%s$' % format_float(
+        #                           this_data['R2'].mean()))
+        # ax.set_xticklabels(ticklabels)
+        # end of above inclusion
 
     plt.tight_layout(pad=.01, h_pad=2)
     mask_str = '_no_mask' if drop_mask else ''
