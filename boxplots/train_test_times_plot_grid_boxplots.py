@@ -29,33 +29,31 @@ plt.rcParams['ytick.labelsize'] = 17
 plt.rcParams['xtick.major.pad'] = .02
 
 color_mapping = {
-  "ctree":              '#cccccc',
-  "ctree + mask":       '#cccccc',
-  "rpart":              '#377eb8',
-  "rpart + mask":       '#377eb8',
-  "Gaussian":           '#cc6633',
-  "Gaussian + mask":    '#cc6633',
-  "oor":                'r',
-  "oor + mask":         'r',
-  "mean":               '#ffccff',
-  "mean + mask":        '#ffccff',
-  "MIA":                '#00ff33',
+  "ctree(train)":              '#cccccc',
+  "ctree + mask(train)":       '#cccccc',
+  "rpart(train)":              '#377eb8',
+  "rpart + mask(train)":       '#377eb8',
+  "Gaussian(train)":           '#cc6633',
+  "Gaussian + mask(train)":    '#cc6633',
+  "oor(train)":                'r',
+  "oor + mask(train)":         'r',
+  "mean(train)":               '#ffccff',
+  "mean + mask(train)":        '#ffccff',
+  "MIA(train)":                '#00ff33',
+  "ctree(test)":              '#cccccc',
+  "ctree + mask(test)":       '#cccccc',
+  "rpart(test)":              '#377eb8',
+  "rpart + mask(test)":       '#377eb8',
+  "Gaussian(test)":           '#cc6633',
+  "Gaussian + mask(test)":    '#cc6633',
+  "oor(estn)":                'r',
+  "oor + mask(test)":         'r',
+  "mean(test)":               '#ffccff',
+  "mean + mask(test)":        '#ffccff',
+  "MIA(test)":                '#00ff33',
 }
 
 FORESTS = ['DECISION TREE', 'RANDOM FOREST', 'XGBOOST', 'SVM', 'KNN']
-
-# To obtain the measure of the variance below, run in R:
-# > results <- make_data3bis(dim=9, size=200000)
-# > var(results$y)
-
-y_variances = {
-    'mcar': 33,#10,
-    'mnar': 33,
-    'pred': 35,#10,
-    'linearlinear': 25.4,
-    'linearnonlinear': 1710,
-    'nonlinearnonlinear': 1082,
-}
 
 # for name in ('mcar', 'mnar', 'pred', 'linearlinear', 'linearnonlinear',
 #              'nonlinearnonlinear'):
@@ -64,13 +62,17 @@ y_variances = {
 master_data = dict()
 
 for name in ('mcar', 'mnar', 'pred'):
-    data = pd.read_csv(f'results/scores_{name}.csv', header=0,
-                    names=['index', 'score', 'method', 'forest'])
+    data_train = pd.read_csv(f'results/train_times_{name}.csv', header=0,
+                           names=['index', 'time', 'method', 'forest'])
+    
+    data_test = pd.read_csv(f'results/test_times_{name}.csv', header=0,
+                           names=['index', 'time', 'method', 'forest'])
+    
+    for i in range(len(data_train)):
+        data_train.at[i, 'method'] = data_train.at[i, 'method'] + '(train)'
+        data_test.at[i, 'method'] = data_test.at[i, 'method'] + '(test)'
 
-    # Knowing the variance of y, we can extract the R2
-    data['R2'] = 1 - data['score'] / y_variances[name]
-    # The fold number is encoded at the end of the name of the index
-    data['fold'] = data['index'].str.extract('(\d+)$').astype(int)
+    data = pd.concat([data_train, data_test], ignore_index=True)
 
     master_data[name] = data
 
@@ -78,14 +80,14 @@ for name in ('mcar', 'mnar', 'pred'):
 height_ratios = [master_data['mcar'].query('forest == @forest')['method'].nunique()
                     for forest in FORESTS]
 
-height = 10.5
+height = 20.5
 width = 10.5
 
 fig, axes = plt.subplots(5, 3, figsize=(width, height),
                         gridspec_kw=dict(height_ratios=height_ratios))
 
 # values for minimum and maximum values for the x axis in all corresponding boxplots
-xlim_min, xlim_max = 0.2, 1.0
+xlim_min, xlim_max = 0, 0.5
 
 missing_mechanisms = ['mcar', 'mnar', 'pred']
 
@@ -99,9 +101,7 @@ for col in range(len(missing_mechanisms)):
         this_data = data_.query('forest == @forest')
         order = [k for k in color_mapping.keys()
                     if k in this_data['method'].unique()]
-        # set x="rel_R2" to plot boxplots using values relative to the mean of R2 values
-        # set x="R2" to plot using the same axis
-        g = sns.boxplot(x="R2", y="method",
+        g = sns.boxplot(x="time", y="method",
                         data=this_data,
                         ax=ax, fliersize=0, palette=color_mapping,
                         order=order,
@@ -130,4 +130,4 @@ for col in range(len(missing_mechanisms)):
 #     ax.set_xlim(xlim_min, xlim_max)
 
 plt.tight_layout(pad=.01, h_pad=2)
-plt.savefig(f'figures/boxplot_grid.pdf')
+plt.savefig(f'figures/train_test_times_boxplot_grid.pdf')

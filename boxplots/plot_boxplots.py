@@ -60,7 +60,7 @@ y_variances = {
 # for name in ('mcar', 'mnar', 'pred', 'linearlinear', 'linearnonlinear',
 #              'nonlinearnonlinear'):
 for name in ('mcar', 'mnar', 'pred'):
-  data = pd.read_csv(f'results/scores_{name}.csv', header=1,
+  data = pd.read_csv(f'results/scores_{name}.csv', header=0,
                   names=['index', 'score', 'method', 'forest'])
 
   # Knowing the variance of y, we can extract the R2

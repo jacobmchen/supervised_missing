@@ -286,7 +286,12 @@ run_scores <- function(model, strategy, withpattern, dataset,
     old <- .Random.seed
     on.exit( { .Random.seed <<- old } )
 
+    # create a matrix to store variance levels
     result <- matrix(0, nrow=n_rep, ncol=length(sizes))
+    # create a matrix to store length of train time
+    train_times <- matrix(0, nrow=n_rep, ncol=length(sizes))
+    # create a matrix to store length of test time
+    test_times <- matrix(0, nrow=n_rep, ncol=length(sizes))
     iter.size <- 0
     for (size in sizes) {
         iter.size <- iter.size + 1
@@ -320,39 +325,75 @@ run_scores <- function(model, strategy, withpattern, dataset,
             train <- preprocess(train.raw, strategy, withpattern, param)
             test <- preprocess(test.raw, strategy, withpattern, param)
 
+            # to-do: implement code that records the 1. training time and 2. testing
+            # time of each of the methods; then create a grid boxplot that summarizes
+            # the train and test times of each method
             if (model == "rpart") {
-                reg <- rpart(y~., data=train, control=rpart.control(
-                    minbucket=min_samples_leaf,cp=0.0, xval=1))
-                res <- predict(reg, subset(test, select=-c(y)), type="vector")
-                # print(res)
+                train_function <- function() {
+                    reg <- rpart(y~., data=train, control=rpart.control(
+                        minbucket=min_samples_leaf,cp=0.0, xval=1))
+                    return(reg)
+                }
+                test_function <- function(reg) {
+                    res <- predict(reg, subset(test, select=-c(y)), type="vector")
+                    return(res)
+                }
             } else if (model == "ctree") {
-                reg <- ctree(y~., data=train, controls=ctree_control(
-                    minbucket=min_samples_leaf, mincriterion=0.0))
-                res <- predict(reg, subset(test, select=-c(y)))
+                train_function <- function() {
+                    reg <- ctree(y~., data=train, controls=ctree_control(
+                        minbucket=min_samples_leaf, mincriterion=0.0))
+                }
+                test_function <- function(reg) {
+                    res <- predict(reg, subset(test, select=-c(y)))
+                }
             } else if (model == "ranger") {
-                reg <- ranger(y~., data=train, num.threads=num.threads.ranger, verbose=F)
-                res <- predict(reg, subset(test, select=-c(y)))$predictions
+                train_function <- function() {
+                    reg <- ranger(y~., data=train, num.threads=num.threads.ranger, verbose=F)
+                }
+                test_function <- function(reg) {
+                    res <- predict(reg, subset(test, select=-c(y)))$predictions
+                }
             } else if (model == "xgboost") {
                 sink('sink')
-                reg <- xgboost(data=as.matrix(subset(train, select=-c(y))) ,label=as.matrix(train$y)
-                    ,nrounds=500 ,nthread=num.threads.ranger
-                    )
-                res <- predict(reg, as.matrix(subset(test, select=-c(y))))
+                train_function <- function() {
+                    reg <- xgboost(data=as.matrix(subset(train, select=-c(y))) ,label=as.matrix(train$y)
+                        ,nrounds=500 ,nthread=num.threads.ranger
+                        )
+                }
+                test_function <- function(reg) {
+                    res <- predict(reg, as.matrix(subset(test, select=-c(y))))
+                }
                 sink()
             } else if (model == "svm") {
-                reg <- svm(y~., data=train)
-                res <- predict(reg, subset(test, select=-c(y)))
+                train_function <- function() {
+                    reg <- svm(y~., data=train)
+                }
+                test_function <- function(reg) {
+                    res <- predict(reg, subset(test, select=-c(y)))
+                }
             } else if (model == "knn") {
-                reg <- train(y~., data=train, method="knn", trControl=trainControl(method="cv"))
-                res <- predict(reg, subset(test, select=-c(y)))
+                train_function <- function() {
+                    reg <- train(y~., data=train, method="knn", trControl=trainControl(method="cv"))
+                }
+                test_function <- function(reg) {
+                    res <- predict(reg, subset(test, select=-c(y)))
+                }
             } else stop("Invalid model")
-            
-            # print(train)
 
-            # print(length(res))
-            # print("test")
-            # print(length(test$y))
+            # time the running time for training and testing
+            if (model == "xgboost") { sink('sink') }
+            train_time <- system.time({
+                reg <- train_function()
+            })
+
+            test_time <- system.time({
+                res <- test_function(reg)
+            })
+            if (model == "xgboost") { sink() }
+
             result[k, iter.size] = mean((test$y - res)**2)
+            train_times[k, iter.size] = train_time["elapsed"]
+            test_times[k, iter.size] = test_time["elapsed"]
         }
 
         print.mess <- paste0(
@@ -368,5 +409,6 @@ run_scores <- function(model, strategy, withpattern, dataset,
     message(print.mess,"\r",appendLF=FALSE)
     flush.console()
 
-    return(result)
+    result_list <- list(result = result, train_times = train_times, test_times = test_times)
+    return(result_list)
 }

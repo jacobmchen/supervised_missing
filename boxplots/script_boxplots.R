@@ -148,21 +148,77 @@ if (boxplot_choice == 1 | boxplot_choice == -1) {
     #     scores_mcar <- modifyList(scores_mcar, res)
     # } else 
     scores_mcar <- Parallel("make_data1", n_features=n_features_boxplot1)
-    save(scores_mcar, file="results/boxplot_MCAR.RData")
+    # separate the R2 scores and the training/testing times
+    result <- list()
+    for (i in seq_along(scores_mcar)) {
+        result <- append(result, list(scores_mcar[[i]]$result))
+    }
+    train_times <- list()
+    for (i in seq_along(scores_mcar)) {
+        train_times <- append(train_times, list(scores_mcar[[i]]$train_times))
+    }
+    test_times <- list()
+    for (i in seq_along(scores_mcar)) {
+        test_times <- append(test_times, list(scores_mcar[[i]]$test_times))
+    }
 
+    scores_mcar <- result
+    train_times_mcar <- train_times
+    test_times_mcar <- test_times
+    save(scores_mcar, file="results/boxplot_MCAR.RData")
+    save(train_times_mcar, file="results/train_times_boxplot_MCAR.RData")
+    save(test_times_mcar, file="results/test_times_boxplot_MCAR.RData")
+
+    
     # if (file.exists("results/boxplot_MNAR.RData")) {
     #     load("results/boxplot_MNAR.RData")
     #     scores_mnar <- modifyList(scores_mnar, Parallel("make_data3", n_features=n_features_boxplot1))
     # } else 
     scores_mnar <- Parallel("make_data3", n_features=n_features_boxplot1)
+    result <- list()
+    for (i in seq_along(scores_mnar)) {
+        result <- append(result, list(scores_mnar[[i]]$result))
+    }
+    train_times <- list()
+    for (i in seq_along(scores_mnar)) {
+        train_times <- append(train_times, list(scores_mnar[[i]]$train_times))
+    }
+    test_times <- list()
+    for (i in seq_along(scores_mnar)) {
+        test_times <- append(test_times, list(scores_mnar[[i]]$test_times))
+    }
+
+    scores_mnar <- result
+    train_times_mnar <- train_times
+    test_times_mnar <- test_times
     save(scores_mnar, file="results/boxplot_MNAR.RData")
+    save(train_times_mnar, file="results/train_times_boxplot_MNAR.RData")
+    save(test_times_mnar, file="results/test_times_boxplot_MNAR.RData")
 
     # if (file.exists("results/boxplot_PRED.RData")) {
     #     load("results/boxplot_PRED.RData")
     #     scores_pred <- modifyList(scores_pred, Parallel("make_data3bis", n_features=n_features_boxplot1))
     # } else 
     scores_pred <- Parallel("make_data3bis", n_features=n_features_boxplot1)
+    result <- list()
+    for (i in seq_along(scores_pred)) {
+        result <- append(result, list(scores_pred[[i]]$result))
+    }
+    train_times <- list()
+    for (i in seq_along(scores_pred)) {
+        train_times <- append(train_times, list(scores_pred[[i]]$train_times))
+    }
+    test_times <- list()
+    for (i in seq_along(scores_pred)) {
+        test_times <- append(test_times, list(scores_pred[[i]]$test_times))
+    }
+
+    scores_pred <- result
+    train_times_pred <- train_times
+    test_times_pred <- test_times
     save(scores_pred, file="results/boxplot_PRED.RData")
+    save(train_times_pred, file="results/train_times_boxplot_PRED.RData")
+    save(test_times_pred, file="results/test_times_boxplot_PRED.RData")
 
 } 
 
