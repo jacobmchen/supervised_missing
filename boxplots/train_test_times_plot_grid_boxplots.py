@@ -87,7 +87,10 @@ fig, axes = plt.subplots(5, 3, figsize=(width, height),
                         gridspec_kw=dict(height_ratios=height_ratios))
 
 # values for minimum and maximum values for the x axis in all corresponding boxplots
-xlim_min, xlim_max = 0, 0.5
+ensemble_xlim_min, ensemble_xlim_max = 0, 0.5
+decision_tree_xlim_min, decision_tree_xlim_max = 0, 0.0125
+svm_xlim_min, svm_xlim_max = 0, 0.05
+knn_xlim_min, knn_xlim_max = 0, 0.15
 
 missing_mechanisms = ['mcar', 'mnar', 'pred']
 
@@ -112,7 +115,30 @@ for col in range(len(missing_mechanisms)):
         ax.set_xlabel('')
         ax.set_ylabel('')
         ax.axvline(0, color='.8', zorder=0, linewidth=3)
-        ax.set_xlim(xlim_min, xlim_max)
+        # to do: reduce the amount of ticks in the decision tree plots
+        if forest == 'RANDOM FOREST' or forest == 'XGBOOST':
+            ax.set_xlim(ensemble_xlim_min, ensemble_xlim_max)
+        elif forest == 'DECISION TREE':
+            ax.set_xlim(decision_tree_xlim_min, decision_tree_xlim_max)
+
+            # Specify the number of ticks you want on the x-axis
+            num_ticks = 3  # Adjust this value based on your preference
+
+            # Calculate tick positions
+            tick_positions = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1], num_ticks)
+
+            # Set the x-axis ticks
+            ax.set_xticks(tick_positions)
+
+            # manually set the first tick to be 0.0 for better readability
+            current_labels = [label.get_text() for label in ax.get_xticklabels()]
+            current_labels[0] = '0.0'
+
+            ax.set_xticklabels(current_labels)
+        elif forest == 'SVM':
+            ax.set_xlim(svm_xlim_min, svm_xlim_max)
+        elif forest == 'KNN':
+            ax.set_xlim(knn_xlim_min, knn_xlim_max)
 
         if col > 0:
             ax.set_yticklabels([])

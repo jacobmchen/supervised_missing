@@ -40,22 +40,22 @@ gridExtra
 viridis
 ```
 
-To run *script_boxplots.R* or *script_consistency.R* with, say, 20 jobs to parallelize the "for" loop and 10 threads per forest/boosting, do
+To build the figures for R2 values and computation times, run the scripts in the boxplots folder:
 
 ```bash
-Rscript boxplots/script_boxplots.R 20 10
-Rscript consistency/script_consistency.R 20 10
+Rscript script_boxplots.R
+
+Rscript post_process_boxplot.R
+python3 plot_boxplots.py
+
+Rscript train_test_times_post_process_boxplot.R
+python3 train_test_times_plot_grid_boxplots.py
 ```
 
-To build the figures, just run the scripts,
+You may adjust hyperparameters for the experiments by changing the variables on lines 43-52 in `script_boxplots.R`.
 
-```bash
-Rscript boxplots/visualisation_boxplot1.R
-Rscript boxplots/visualisation_boxplot2.R
-python consistency/visualisation_consistency.py
-```
-
-All figure outputs go to the directory **figures** (created when nonexistent).
+All figure outputs go to the directory **figures** (created when nonexistent). Be careful that some files
+may be overwritten when running the code repeatedly.
 
 Nicolas Prost
 
