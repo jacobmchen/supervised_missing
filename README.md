@@ -46,7 +46,7 @@ To build the figures for R2 values and computation times, run the scripts in the
 Rscript script_boxplots.R
 
 Rscript post_process_boxplot.R
-python3 plot_boxplots.py
+python3 plot_grid_boxplots.py
 
 Rscript train_test_times_post_process_boxplot.R
 python3 train_test_times_plot_grid_boxplots.py
