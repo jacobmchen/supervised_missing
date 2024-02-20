@@ -321,13 +321,27 @@ run_scores <- function(model, strategy, withpattern, dataset,
             test.raw <- data.raw[1:n_test, ]
             train.raw <- data.raw[(n_test+1):size, ]
 
-            param <- fit.preprocess(train.raw, strategy, withpattern)
-            train <- preprocess(train.raw, strategy, withpattern, param)
-            test <- preprocess(test.raw, strategy, withpattern, param)
+            # the following three functions impute the missing values
+            param_function <- function() {
+                param <- fit.preprocess(train.raw, strategy, withpattern)
+                return(param)
+            }
+            train_function <- function(param) {
+                train <- preprocess(train.raw, strategy, withpattern, param)
+                return(train)
+            }
+            test_function <- function(param) {
+                test <- preprocess(test.raw, strategy, withpattern, param)
+                return(test)
+            }
 
-            # to-do: implement code that records the 1. training time and 2. testing
-            # time of each of the methods; then create a grid boxplot that summarizes
-            # the train and test times of each method
+            # time the amount of time it takes to make imputations
+            imputation_time <- system.time({
+                param <- param_function()
+                train <- train_function(param)
+                test <- test_function(param)
+            })
+
             if (model == "rpart") {
                 train_function <- function() {
                     reg <- rpart(y~., data=train, control=rpart.control(
@@ -373,7 +387,9 @@ run_scores <- function(model, strategy, withpattern, dataset,
                 }
             } else if (model == "knn") {
                 train_function <- function() {
-                    reg <- train(y~., data=train, method="knn", trControl=trainControl(method="cv"))
+                    # set trainControl method to none in order to avoid train validation set splitting
+                    # set k=5 to pre-set k to be 5 for the model
+                    reg <- train(y~., data=train, method="knn", trControl=trainControl(method="none"), tuneGrid=expand.grid(k=5))
                 }
                 test_function <- function(reg) {
                     res <- predict(reg, subset(test, select=-c(y)))
@@ -392,7 +408,11 @@ run_scores <- function(model, strategy, withpattern, dataset,
             if (model == "xgboost") { sink() }
 
             result[k, iter.size] = mean((test$y - res)**2)
-            train_times[k, iter.size] = train_time["elapsed"]
+
+            # the total training time must also include the amount of time it takes to make
+            # imputations on the model
+            train_times[k, iter.size] = train_time["elapsed"] + imputation_time["elapsed"]
+
             test_times[k, iter.size] = test_time["elapsed"]
         }
 

@@ -83,20 +83,34 @@ height_ratios = [master_data['mcar'].query('forest == @forest')['method'].nuniqu
 height = 20.5
 width = 10.5
 
-fig, axes = plt.subplots(5, 3, figsize=(width, height),
+"""
+NOTE: to change plot between 1 column and 3 columns, there are three sections of the
+code that you need to change that are labeled with #!
+"""
+
+#! if only plot the first column: change first two parameters to 5, 1
+#! if plot all three columns: change first two parameters to 5, 3
+fig, axes = plt.subplots(5, 1, figsize=(width, height),
                         gridspec_kw=dict(height_ratios=height_ratios))
 
 # values for minimum and maximum values for the x axis in all corresponding boxplots
-ensemble_xlim_min, ensemble_xlim_max = 0, 0.5
-decision_tree_xlim_min, decision_tree_xlim_max = 0, 0.0125
-svm_xlim_min, svm_xlim_max = 0, 0.05
-knn_xlim_min, knn_xlim_max = 0, 0.15
+ensemble_xlim_min, ensemble_xlim_max = 0, 0.6
+decision_tree_xlim_min, decision_tree_xlim_max = 0, 0.03
+svm_xlim_min, svm_xlim_max = 0, 0.06
+knn_xlim_min, knn_xlim_max = 0, 0.06
 
-missing_mechanisms = ['mcar', 'mnar', 'pred']
+#! if only plot the first column: uncomment the first line
+#! if plot all three columns: uncomment the second line
+missing_mechanisms = ['mcar']
+# missing_mechanisms = ['mcar', 'mnar', 'pred']
 
 for col in range(len(missing_mechanisms)):
     for row in range(len(FORESTS)):
-        ax = axes[row][col]
+        #! if only plot the first column: uncomment the first line
+        #! if plot all three columns: uncomment the second line
+        ax = axes[row]
+        # ax = axes[row][col]
+
         forest = FORESTS[row]
 
         data_ = master_data[missing_mechanisms[col]]
