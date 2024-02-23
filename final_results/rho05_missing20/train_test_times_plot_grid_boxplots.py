@@ -115,6 +115,9 @@ for col in range(len(missing_mechanisms)):
         forest = FORESTS[row]
 
         data_ = master_data[missing_mechanisms[col]]
+        
+        # remove testing times
+        data_ = data_[~data_['method'].str.contains('test')]
 
         this_data = data_.query('forest == @forest')
         order = [k for k in color_mapping.keys()
@@ -130,7 +133,7 @@ for col in range(len(missing_mechanisms)):
         ax.set_xlabel('')
         ax.set_ylabel('')
         ax.axvline(0, color='.8', zorder=0, linewidth=3)
-        # to do: reduce the amount of ticks in the decision tree plots
+
         if forest == 'RANDOM FOREST':
             ax.set_xlim(random_forest_xlim_min, random_forest_xlim_max)
         elif forest == 'XGBOOST':
