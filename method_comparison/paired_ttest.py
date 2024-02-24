@@ -26,15 +26,30 @@ def return_empty_matrix(n):
         pval_matrix.append(arr)
     return pval_matrix
 
+def xaxis_label_format(labels):
+    formatted = []
+
+    # add a line break for every other label so that the x axis labels
+    # don't overlap with each other on the table
+    for i in range(len(labels)):
+        if i % 2 == 1:
+            formatted.append('\n' + labels[i])
+        else:
+            formatted.append(labels[i])
+    return formatted
+
 def paired_ttest(data, filename):
     # find the unique categories in method
-    method_categories = set(data['method'])
-    method_categories = list(method_categories)
-    method_categories.remove('rpart')
-    method_categories.remove('rpart + mask')
-    method_categories.remove('ctree')
-    method_categories.remove('ctree + mask')
-    method_categories.remove('MIA')
+    # method_categories = set(data['method'])
+    # method_categories = list(method_categories)
+    # method_categories.remove('rpart')
+    # method_categories.remove('rpart + mask')
+    # method_categories.remove('ctree')
+    # method_categories.remove('ctree + mask')
+    # method_categories.remove('MIA')
+
+    # hard code the method categories and the order of the method categories
+    method_categories = ['Gaussian', 'Gaussian + mask', 'oor', 'oor + mask', 'mean', 'mean + mask']
 
     learning_methods = set(data['forest'])
 
@@ -71,7 +86,7 @@ def paired_ttest(data, filename):
         
         # code below makes plots
         column_labels = method_categories
-        row_labels = method_categories
+        row_labels = xaxis_label_format(method_categories)
         matrix_data = np.array(pval_matrix)
 
         # Apply a color map based on values between 0 and 0.5
@@ -89,17 +104,17 @@ def paired_ttest(data, filename):
         # Add labels to columns and rows
         ax.set_xticks(np.arange(len(column_labels)))
         ax.set_yticks(np.arange(len(row_labels)))
-        ax.set_xticklabels(column_labels)
-        ax.set_yticklabels(row_labels)
+        ax.set_xticklabels(row_labels, fontsize=7)
+        ax.set_yticklabels(column_labels, fontsize=7)
 
-        ax.set_xticklabels(column_labels, rotation=90)  # Rotate x-labels vertically
+        # ax.set_xticklabels(column_labels, rotation=90)  # Rotate x-labels vertically
 
         ax.set_title(learning_method)
 
         # Display numbers inside each cell
         for i in range(len(row_labels)):
             for j in range(len(column_labels)):
-                text = ax.text(j, i, f'{matrix_data[i, j]:.2f}', ha='center', va='center', color='black')
+                text = ax.text(j, i, f'{matrix_data[i, j]:.3f}', ha='center', va='center', color='black', fontsize=8)
 
         # Add a colorbar for reference
         cbar = plt.colorbar(img, ax=ax)
