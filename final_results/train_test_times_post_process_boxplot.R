@@ -1,12 +1,15 @@
-load("results/boxplot_MCAR.RData")
-load("results/boxplot_MNAR.RData")
-load("results/boxplot_PRED.RData")
-# load("results/boxplot2_1.RData")
-# load("results/boxplot2_2.RData")
-# load("results/boxplot2_3.RData")
+file_path = 'results-miss6-rho5/results/'
+output_file_path = 'results-miss6-rho5/results/'
+
+load(paste0(file_path, "train_times_boxplot_MCAR.RData"))
+load(paste0(file_path, "test_times_boxplot_MCAR.RData"))
+load(paste0(file_path, "train_times_boxplot_MNAR.RData"))
+load(paste0(file_path, "test_times_boxplot_MNAR.RData"))
+load(paste0(file_path, "train_times_boxplot_PRED.RData"))
+load(paste0(file_path, "test_times_boxplot_PRED.RData"))
 # these are of lists of matrices of shape n_rep*length(sizes)
 
-names(scores_mcar) <- c(
+names(train_times_mcar) <- c(
   "rpart", "rpart + mask", 
   "mean", "mean + mask", "oor", "oor + mask",
   "Gaussian", "Gaussian + mask", 
@@ -24,16 +27,15 @@ names(scores_mcar) <- c(
   "Gaussian (knn)", "Gaussian + mask (knn)"
 )
 
-names(scores_mnar) <- names(scores_mcar)
-names(scores_pred) <- names(scores_mcar)
-# names(scores_21) <- names(scores_mcar)
-# names(scores_22) <- names(scores_mcar)
-# names(scores_23) <- names(scores_mcar)
-
+names(test_times_mcar) <- names(train_times_mcar)
+names(train_times_mnar) <- names(train_times_mcar)
+names(test_times_mnar) <- names(train_times_mcar)
+names(train_times_pred) <- names(train_times_mcar)
+names(test_times_pred) <- names(train_times_mcar)
      
-df_for_ggplot <- function(scores) {
+df_for_ggplot <- function(scores, col_name) {
     aa <- cbind.data.frame(unlist(scores), rep(names(scores), each=length(scores[[1]])))
-    colnames(aa) <- c("score", "method")
+    colnames(aa) <- c(col_name, "method")
     aa$forest <- as.factor(
         ifelse(grepl("xgboost", aa$method), "XGBOOST", 
                ifelse(grepl("forest", aa$method), "RANDOM FOREST", 
@@ -48,12 +50,20 @@ df_for_ggplot <- function(scores) {
 }
 
 
-aa <- df_for_ggplot(scores_mcar)
-write.csv(aa,'results/scores_mcar.csv')
-aa <- df_for_ggplot(scores_mnar)
-write.csv(aa,'results/scores_mnar.csv')
-aa <- df_for_ggplot(scores_pred)
-write.csv(aa,'results/scores_pred.csv')
+aa <- df_for_ggplot(train_times_mcar, "train_time")
+write.csv(aa,paste0(file_path, 'train_times_mcar.csv'))
+aa <- df_for_ggplot(test_times_mcar, "test_time")
+write.csv(aa,paste0(file_path, 'test_times_mcar.csv'))
+
+aa <- df_for_ggplot(train_times_mnar, "train_time")
+write.csv(aa,paste0(file_path, 'train_times_mnar.csv'))
+aa <- df_for_ggplot(test_times_mnar, "test_time")
+write.csv(aa,paste0(file_path, 'test_times_mnar.csv'))
+
+aa <- df_for_ggplot(train_times_pred, "train_time")
+write.csv(aa,paste0(file_path, 'train_times_pred.csv'))
+aa <- df_for_ggplot(test_times_pred, "test_time")
+write.csv(aa,paste0(file_path, 'test_times_pred.csv'))
 # aa <- df_for_ggplot(scores_21)
 # write.csv(aa,'boxplots/results/scores_linearlinear.csv')
 # aa <- df_for_ggplot(scores_22)

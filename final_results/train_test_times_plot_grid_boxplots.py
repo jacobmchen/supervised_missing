@@ -3,6 +3,9 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+read_filepath = f'results-miss6-rho5/'
+output_filepath = f'results-miss6-rho5/'
+
 def format_float(x):
     fmt = '%.2f'
     for i in range(-1, 1):
@@ -62,10 +65,10 @@ FORESTS = ['DECISION TREE', 'RANDOM FOREST', 'XGBOOST', 'SVM', 'KNN']
 master_data = dict()
 
 for name in ('mcar', 'mnar', 'pred'):
-    data_train = pd.read_csv(f'results/train_times_{name}.csv', header=0,
+    data_train = pd.read_csv(read_filepath + f'results/train_times_{name}.csv', header=0,
                            names=['index', 'time', 'method', 'forest'])
     
-    data_test = pd.read_csv(f'results/test_times_{name}.csv', header=0,
+    data_test = pd.read_csv(read_filepath + f'results/test_times_{name}.csv', header=0,
                            names=['index', 'time', 'method', 'forest'])
     
     for i in range(len(data_train)):
@@ -176,4 +179,4 @@ for col in range(len(missing_mechanisms)):
 #     ax.set_xlim(xlim_min, xlim_max)
 
 plt.tight_layout(pad=.01, h_pad=2)
-plt.savefig(f'figures/train_test_times_boxplot_grid.pdf')
+plt.savefig(output_filepath + f'figures/train_test_times_boxplot_grid.pdf')

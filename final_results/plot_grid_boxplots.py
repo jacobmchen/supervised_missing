@@ -3,6 +3,9 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+read_filepath = f'results-miss6-rho5/'
+output_filepath = f'results-miss6-rho5/'
+
 def format_float(x):
     fmt = '%.2f'
     for i in range(-1, 1):
@@ -64,7 +67,7 @@ y_variances = {
 master_data = dict()
 
 for name in ('mcar', 'mnar', 'pred'):
-    data = pd.read_csv(f'results/scores_{name}.csv', header=0,
+    data = pd.read_csv(read_filepath + f'results/scores_{name}.csv', header=0,
                     names=['index', 'score', 'method', 'forest'])
 
     # Knowing the variance of y, we can extract the R2
@@ -130,4 +133,4 @@ for col in range(len(missing_mechanisms)):
 #     ax.set_xlim(xlim_min, xlim_max)
 
 plt.tight_layout(pad=.01, h_pad=2)
-plt.savefig(f'figures/boxplot_grid.pdf')
+plt.savefig(output_filepath + f'figures/boxplot_grid.pdf')
