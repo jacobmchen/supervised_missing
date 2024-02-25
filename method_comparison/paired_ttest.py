@@ -49,15 +49,26 @@ def paired_ttest(data, filename):
     # method_categories.remove('MIA')
 
     # hard code the method categories and the order of the method categories
-    method_categories = ['Gaussian', 'Gaussian + mask', 'oor', 'oor + mask', 'mean', 'mean + mask']
+    # method_categories = ['Gaussian', 'Gaussian + mask', 'oor', 'oor + mask', 'mean', 'mean + mask']
 
-    learning_methods = set(data['forest'])
+    # hard code the learning methods
+    learning_methods = ['DECISION TREE', 'RANDOM FOREST', 'XGBOOST', 'SVM', 'KNN']
 
     # Create a PDF file to save the plots
     pdf_filename = filename
     pdf_pages = PdfPages(pdf_filename)
 
     for learning_method in learning_methods:
+        # hard code the method categories depending on which learning method we are using
+        if learning_method == 'DECISION TREE':
+            method_categories = ['ctree', 'ctree + mask', 'rpart', 'rpart + mask', 'Gaussian', 'Gaussian + mask', 
+                                 'oor', 'oor + mask', 'mean', 'mean + mask', 'MIA']
+        elif learning_method == 'RANDOM FOREST' or learning_method == 'XGBOOST':
+            method_categories = ['Gaussian', 'Gaussian + mask', 
+                                 'oor', 'oor + mask', 'mean', 'mean + mask', 'MIA']
+        else:
+            method_categories = ['Gaussian', 'Gaussian + mask', 'oor', 'oor + mask', 'mean', 'mean + mask']
+
         # consider each learning method separately
         subset_data = data[data['forest'] == learning_method]
         # print(learning_method)
@@ -100,12 +111,17 @@ def paired_ttest(data, filename):
 
         # Display the matrix with colors
         img = ax.imshow(matrix_data, cmap=cmap, norm=norm)
+        
+        if learning_method == 'DECISION TREE':
+            fontsize = 5
+        else:
+            fontsize = 7
 
         # Add labels to columns and rows
         ax.set_xticks(np.arange(len(column_labels)))
         ax.set_yticks(np.arange(len(row_labels)))
-        ax.set_xticklabels(row_labels, fontsize=7)
-        ax.set_yticklabels(column_labels, fontsize=7)
+        ax.set_xticklabels(row_labels, fontsize=fontsize)
+        ax.set_yticklabels(column_labels, fontsize=fontsize)
 
         # ax.set_xticklabels(column_labels, rotation=90)  # Rotate x-labels vertically
 
@@ -114,7 +130,7 @@ def paired_ttest(data, filename):
         # Display numbers inside each cell
         for i in range(len(row_labels)):
             for j in range(len(column_labels)):
-                text = ax.text(j, i, f'{matrix_data[i, j]:.3f}', ha='center', va='center', color='black', fontsize=8)
+                text = ax.text(j, i, f'{matrix_data[i, j]:.3f}', ha='center', va='center', color='black', fontsize=fontsize)
 
         # Add a colorbar for reference
         cbar = plt.colorbar(img, ax=ax)
