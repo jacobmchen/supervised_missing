@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.rcParams.update({'font.size': 12})
+matplotlib.rcParams.update({'font.size': 18})
 
 if not os.path.exists("figures"):
     os.mkdir("figures")
@@ -28,34 +28,46 @@ def method_name_func(model, strategy, withpattern):
         elif model == "ctree":
             method_name = "ctree (surrogates)"
         elif model == "xgboost":
-            method_name = "Block (XGBoost)"
+            method_name = "MIA (XGBoost)"
     if withpattern == "TRUE":
         method_name += " + mask"
     if model == "ranger":
         method_name += " - forest"
     if model == "xgboost":
         method_name += " - xgboost"
+    if model == "svm":
+        method_name += " - svm"
+    if model == "knn":
+        method_name += " - knn"
     return method_name
 
 
 # remove the three first values: too small sample sizes
-sizes = np.logspace(2, 5, 20).astype('int64')[3:]
+#sizes = np.logspace(2, 5, 20).astype('int64')[3:]
+sizes = np.floor(10**(np.linspace(2, 4.18, 7))).astype('int64')
+#sizes = np.array([200, 250, 300]).astype('int64')
+#sizes = np.logspace(2.5, 5, 15).astype('int64')
 
 methods_dict = {
     'rpart': [
-        {'model': 'rpart', 'strategy': 'none', 'withpattern': "FALSE"},
-        {'model': 'rpart', 'strategy': 'mean', 'withpattern': "FALSE"},
-        {'model': 'rpart', 'strategy': 'gaussian', 'withpattern': "FALSE"},
-        {'model': 'rpart', 'strategy': 'mia', 'withpattern': "FALSE"}],
+       {'model': 'rpart', 'strategy': 'none', 'withpattern': "FALSE"},
+       {'model': 'rpart', 'strategy': 'mean', 'withpattern': "FALSE"},
+       {'model': 'rpart', 'strategy': 'gaussian', 'withpattern': "FALSE"},
+       {'model': 'rpart', 'strategy': 'mia', 'withpattern': "FALSE"}],
     'ranger': [
-        {'model': 'ranger', 'strategy': 'mean', 'withpattern': "FALSE"},
-        {'model': 'ranger', 'strategy': 'gaussian', 'withpattern': "FALSE"},
-        {'model': 'ranger', 'strategy': 'mia', 'withpattern': "FALSE"}],
+       {'model': 'ranger', 'strategy': 'mean', 'withpattern': "FALSE"},
+       {'model': 'ranger', 'strategy': 'gaussian', 'withpattern': "FALSE"},
+       {'model': 'ranger', 'strategy': 'mia', 'withpattern': "FALSE"}],
     'xgboost': [
-        {'model': 'xgboost', 'strategy': 'mean', 'withpattern': "FALSE"},
-        {'model': 'xgboost', 'strategy': 'gaussian', 'withpattern': "FALSE"},
-        #{'model': 'xgboost', 'strategy': 'none', 'withpattern': "FALSE"},
-        {'model': 'xgboost', 'strategy': 'mia', 'withpattern': "FALSE"}]
+       {'model': 'xgboost', 'strategy': 'mean', 'withpattern': "FALSE"},
+       {'model': 'xgboost', 'strategy': 'gaussian', 'withpattern': "FALSE"},
+       {'model': 'xgboost', 'strategy': 'none', 'withpattern': "FALSE"}], 
+    'svm': [
+       {'model': 'svm', 'strategy': 'mean', 'withpattern': "FALSE"},
+       {'model': 'svm', 'strategy': 'gaussian', 'withpattern': "FALSE"}], 
+    'knn': [
+      {'model': 'knn', 'strategy': 'mean', 'withpattern': "FALSE"},
+       {'model': 'knn', 'strategy': 'gaussian', 'withpattern': "FALSE"}]
     }
 
 scores_raw = []
@@ -66,17 +78,18 @@ for name, methods in methods_dict.items():
         for method in methods:
             model, strategy, withpattern = tuple(method.values())
 
-            csvfile = "consistency/results/{}_{}_{}_{}.csv".format(
+            csvfile = "results/{}_{}_{}_{}.csv".format(
                 dataset, model, strategy, withpattern)
             if os.path.exists(csvfile):
                 scores_method = pd.read_csv(csvfile, sep=" ")
                 method_name = method_name_func(model, strategy, withpattern)
-                scorerawi[method_name] = np.array(scores_method)[:, 3:]
+                #scorerawi[method_name] = np.array(scores_method)[:, 3:]
+                scorerawi[method_name] = np.array(scores_method)
         scores_raw.append(scorerawi)
 
 
 # Transformation of scores, mse to explained variance
-VARY = [25, 1702, 10823.94, 25, 1702, 10823.94, 25, 1702, 10823.94]
+VARY = [25, 1702, 10823.94, 25, 1702, 10823.94, 25, 1702, 10823.94, 25, 1702, 10823.94, 25, 1702, 10823.94]
 scores_expvar = [
     {key: 1 - scr/VARY[datanum]for key, scr in score.items()}
     for datanum, score in enumerate(scores_raw)]
@@ -103,6 +116,15 @@ scores[6]['Bayes rate'] = (np.repeat(0.8087995, L), np.repeat(0, L),
                            np.repeat(0, L))
 scores[7]['Bayes rate'] = (np.repeat(0.7484916, L), np.repeat(0, L),
                            np.repeat(0, L))
+scores[9]['Bayes rate'] = (np.repeat(0.8087995, L), np.repeat(0, L),
+                           np.repeat(0, L))
+scores[10]['Bayes rate'] = (np.repeat(0.7484916, L), np.repeat(0, L),
+                           np.repeat(0, L))
+scores[12]['Bayes rate'] = (np.repeat(0.8087995, L), np.repeat(0, L),
+                           np.repeat(0, L))
+scores[13]['Bayes rate'] = (np.repeat(0.7484916, L), np.repeat(0, L),
+                           np.repeat(0, L))
+
 
 
 ###############################################################################
@@ -126,7 +148,8 @@ CB_color_cycle = [
 
 
 plt.clf()
-fig, ax = plt.subplots(3, 3, figsize=(10, 10))
+fig, ax = plt.subplots(nrows = 5, ncols = 3, figsize=(18, 24))
+#plt.gcf().subplots_adjust(left = 0, bottom = 0, right = 0.3, top = 0.2, wspace = 0.5, hspace = 0.5)
 # colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors = CB_color_cycle
 colors_dict = {
@@ -135,21 +158,28 @@ colors_dict = {
     'Block (XGBoost) - xgboost': colors[5],
     'MIA': colors[2],
     'MIA - forest': colors[2],
-    'MIA - xgboost': colors[2],
+    'MIA (XGBoost) - xgboost': colors[2],
     'Gaussian imputation': colors[3],
     'Mean imputation - forest': colors[1],
     'Mean imputation - xgboost': colors[1],
     'Gaussian imputation - forest': colors[3],
     'Gaussian imputation - xgboost': colors[3],
     'Bayes rate': colors[4],
+    'Mean imputation - svm': colors[1],
+    'Mean imputation - knn': colors[1],
+    'Gaussian imputation - svm': colors[3],
+    'Gaussian imputation - knn': colors[3]
 }
 
 ###############################################################################
 # There are 3 x 3 plots: trees, forests, boosting for models 1, 2, 3
 ###############################################################################
-yoffset = [(0.05, 0.05), (0.05, 0.05), (0.01, 0.05),
-           (0.01, 0.01), (0.015, 0.015), (0.005, 0.005),
-           (0.01, 0.01), (0.015, 0.015), (0.005, 0.005)]
+yoffset = [(0.1, 0.85), (0.1, 0.77), (0.2, 1),
+           (0.4, 0.85),  (0.4, 0.77), (0.8, 1),
+           (0.4, 0.85), (0.4, 0.77), (0.8, 1),
+           (0.4, 0.85),  (0.2, 0.77), (0.8, 1),
+           (0.4, 0.85), (0.2, 0.77), (0.8, 1)
+           ]
 
 for enum, score in enumerate(scores):
     ax_x = enum // 3
@@ -222,25 +252,25 @@ for enum, score in enumerate(scores):
 
     ax[ax_x, ax_y].set_xlabel("Sample size")
     ax[ax_x, ax_y].set_ylabel("Explained variance")
-    ax[ax_x, ax_y].set_ylim(
-        np.array([s[0] for _, s in score.items()]).min() - yoffset[enum][0],
-        np.array([s[0] for _, s in score.items()]).max() + yoffset[enum][1]
-    )
-    ax[ax_x, ax_y].set_xlim(297.63514416, 10**5)
+    ax[ax_x, ax_y].set_ylim( yoffset[enum][0], yoffset[enum][1]    )
+    ax[ax_x, ax_y].set_xlim(100, 15135)
     ax[ax_x, ax_y].grid()
 ###############################################################################
 
-ax[0, 0].text(10**3, 0.95, "Linear problem\n(high noise)")
-ax[0, 1].text(10**3, 0.88, "Friedman problem\n(high noise)")
-ax[0, 2].text(10**3, 1.12, "Non-linear problem\n(low noise)")
-ax[0, 2].text(2*10**5, 0.7, "DECISION TREE", rotation=-90, fontweight='bold')
-ax[1, 2].text(2*10**5, 0.96, "RANDOM FOREST", rotation=-90, fontweight='bold')
-ax[2, 2].text(2*10**5, 0.97, "XGBOOST", rotation=-90, fontweight='bold')
+ax[0, 0].text(600, 0.87, "Linear problem\n(high noise)")
+ax[0, 1].text(600, 0.792, "Friedman problem\n(high noise)")
+ax[0, 2].text(600, 1.03, "Non-linear problem\n(low noise)")
+ax[0, 2].text(20000, 0.35, "DECISION TREE", rotation=-90, fontweight='bold')
+ax[1, 2].text(20000, 0.83, "RANDOM FOREST", rotation=-90, fontweight='bold')
+ax[2, 2].text(20000, 0.85, "XGBOOST", rotation=-90, fontweight='bold')
+ax[3, 2].text(20000, 0.89, "SVM", rotation=-90, fontweight='bold')
+ax[4, 2].text(20000, 0.89, "KNN", rotation=-90, fontweight='bold')
+#ax[2, 2].text(2*10**5, 0.97, "XGBOOST", rotation=-90, fontweight='bold')
 
 ###############################################################################
 
-fig.legend(loc=(0.17, 0.01), ncol=3, frameon=False)
+fig.legend(loc=(0.29, 0.03), ncol=3, frameon=False)
 plt.tight_layout()
-fig.subplots_adjust(bottom=0.13, top=0.9, right=0.95)
+fig.subplots_adjust(bottom=0.12, right=0.95)
 fig.savefig('figures/consistency_log_merge.pdf')
 plt.close(fig)

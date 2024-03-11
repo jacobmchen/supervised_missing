@@ -6,6 +6,8 @@ library(ranger)
 library(xgboost)
 library(MASS)
 library(norm)
+library(e1071)
+library(caret)
 
 ################################################################################
 ################################## DATA ########################################
@@ -59,7 +61,6 @@ make_data3 <- function(size=100, noise=0.1, prob=0.4, rho=0.5, dim=10) {
     colnames(result)[1] <- "y"
     return(result)
 }
-
 
 ###############################################################################
 ################################ PREPROCESSING ################################
@@ -130,6 +131,7 @@ preprocess <- function(df, strategy, withpattern, parameters) {
     X <- as.data.frame(df[, 2:dim])
     y <- df[, 1]
     indicators <- is.na(X)
+    #print(indicators) 
 
     if (strategy == "mean") {
         mu <- parameters[["mean"]]
@@ -150,20 +152,133 @@ preprocess <- function(df, strategy, withpattern, parameters) {
         X.imput <- cbind.data.frame(Xm, Xp)
     } else if (strategy == "none") {
         X.imput <- X
-    }
+    }  else if  (strategy == "oor") {
+      Xm <- X
+      Xm[indicators] <- 999999
+      X.imput <- cbind.data.frame(Xm)
+    } 
 
     if (withpattern==TRUE) {
         indicators.factor <- data.frame(apply(indicators, 2, as.factor))
         indicators.addfactor <- data.frame(lapply(indicators.factor,
-            function(col) factor(col, levels=c("FALSE", "TRUE"))))
-        indsansNA <- which((sapply(indicators.factor, nlevels)) == 1)
+            function(col) as.numeric(factor(col, levels=c("FALSE", "TRUE")))))
+        # indsansNA <- which((sapply(indicators.factor, nlevels)) == 1)
+        indsansNA <- which( sapply(indicators.addfactor, function(col) length(levels(factor(col))) == 1) )
         X.imput <- cbind.data.frame(X.imput, indicators.addfactor[, -indsansNA])
     }
 
     result <- data.frame(cbind(y, X.imput))
     colnames(result)[1] <- "y"
+    # find out how to print result to check if the above withpattern is doing what it is intending to do
+    # print(result)
     return(result)
 }
+
+
+
+# ###############################################################################
+# ################################ PREPROCESSING ################################
+# ###############################################################################
+# imputeEllP <- function(point, Sigma.inv){
+#     #' Row-wise imputation, vectorized in impute.gaussian.
+#     point.new <- point
+#     dim <- length(point)
+#     index <- which(is.na(point))
+#     if (length(index) == 1){
+#         point.new[index] <- - point.new[-index] %*% Sigma.inv[index, -index] /
+#             Sigma.inv[index, index]
+#     } else {
+#         index <- which(is.na(point))
+#         A <- Sigma.inv[index, index]
+#         b <- - Sigma.inv[index, (1:dim)[-index], drop=FALSE] %*% point[-index]
+#         point.new[index] <- solve(A) %*% b
+#     }
+#     return(point.new)
+# }
+
+
+# impute.gaussian <- function(X, parameters) {
+#     mu <- parameters[["mu"]]
+#     sigma <- parameters[["sigma"]]
+#     # ledoit-wolf
+#     trace.sigma <- sum(diag(sigma))
+#     shrinkage <- 0.01
+#     sigma <- (1 - shrinkage) * sigma + shrinkage * trace.sigma * diag(dim(X)[2])
+
+#     X.prep <- t(t(as.matrix(X)) - mu)
+#     Inv.Sigma.tmp <- solve(sigma)
+#     miss.rowi <- which(rowSums(is.na(X.prep)) > 0.5)
+#     X.new <- X.prep[miss.rowi, , drop=FALSE]
+#     X.prep[miss.rowi, ] <- t(apply(X.new, 1, imputeEllP, Inv.Sigma.tmp))
+#     X.imput <- as.data.frame(t(t(X.prep) + mu))
+#     colnames(X.imput) <- colnames(X)
+#     return(X.imput)
+# }
+
+
+# fit.preprocess <- function(df, strategy, withpattern) {
+#     #' Get imputation parameters on the train set.
+#     size <- dim(df)[1]
+#     dim <- dim(df)[2]
+#     X <- as.data.frame(df[, 2:dim])
+#     y <- df[, 1]
+#     indicators <- is.na(X)
+
+#     if (strategy == "mean") {
+#         mu <- apply(X, 2, mean, na.rm = TRUE)
+#         parameters <- list(mean=mu)
+
+#     } else if (strategy == "gaussian") {
+#         s <- prelim.norm(as.matrix(X))
+#         thetahat <- em.norm(s, showits= FALSE, criterion=sqrt(.Machine$double.eps))
+#         parameters <- getparam.norm(s, thetahat)
+
+#     } else parameters <- list()
+
+#     return(parameters)
+# }
+
+
+# preprocess <- function(df, strategy, withpattern, parameters) {
+#     size <- dim(df)[1]
+#     dim <- dim(df)[2]
+#     X <- as.data.frame(df[, 2:dim])
+#     y <- df[, 1]
+#     indicators <- is.na(X)
+
+#     if (strategy == "mean") {
+#         mu <- parameters[["mean"]]
+#         X.imput <- sapply(1:ncol(X),
+#             function(x) ifelse(is.na(X[, x]), mu[x], X[, x]))
+#         X.imput <- as.data.frame(X.imput)
+#         colnames(X.imput) <- colnames(X)
+
+#     } else if (strategy == "gaussian") {
+#         X.imput <- impute.gaussian(X, parameters)
+
+#     } else if (strategy == "mia") {
+#         # encode MIA by duplicating columns and imputing by +/- "inf"
+#         Xm <- X
+#         Xm[indicators] <- -10**100
+#         Xp <- X
+#         Xp[indicators] <- +10**100
+#         X.imput <- cbind.data.frame(Xm, Xp)
+#     } else if (strategy == "none") {
+#         X.imput <- X
+#     }
+
+#     if (withpattern==TRUE) {
+#         indicators.factor <- data.frame(apply(indicators, 2, as.factor))
+#         indicators.addfactor <- data.frame(lapply(indicators.factor,
+#             function(col) factor(col, levels=c("FALSE", "TRUE"))))
+#         indsansNA <- which((sapply(indicators.factor, nlevels)) == 1)
+#         X.imput <- cbind.data.frame(X.imput, indicators.addfactor[, -indsansNA])
+#     }
+
+#     result <- data.frame(cbind(y, X.imput))
+#     colnames(result)[1] <- "y"
+#     return(result)
+# }
 
 
 
@@ -233,7 +348,16 @@ run_scores <- function(model, strategy, withpattern, dataset,
                     )
                 res <- predict(reg, as.matrix(subset(test, select=-c(y))))
                 sink()
-           } else stop("Invalid model")
+            } else if (model == "svm") {
+                reg <- svm(y~., data=train)
+                res <- predict(reg, subset(test, select=-c(y)))
+            } else if (model == "knn") {
+                # set trainControl method to none in order to avoid train validation set splitting
+                # set k=5 to pre-set k to be 5 for the model
+                reg <- train(y~., data=train, method="knn", trControl=trainControl(method="none"), tuneGrid=expand.grid(k=5))
+                res <- predict(reg, subset(test, select=-c(y)))
+                
+            } else stop("Invalid model")
 
             result[k, iter.size] = mean((test$y - res)**2)
         }
